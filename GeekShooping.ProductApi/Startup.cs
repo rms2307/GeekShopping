@@ -1,17 +1,15 @@
+using AutoMapper;
 using GeekShooping.ProductApi.Model.Context;
+using GeekShopping.ProductApi.Repository;
+using GeekShopping.ProductAPI.Config;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace GeekShooping.ProductApi
 {
@@ -33,6 +31,12 @@ namespace GeekShooping.ProductApi
                 UseMySql(connection,
                     new MySqlServerVersion(
                         new Version(8, 0, 27))));
+
+            IMapper mapper = MappingConfig.RegisterMaps().CreateMapper();
+            services.AddSingleton(mapper);
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            services.AddScoped<IProductRepository, ProductRepository>();
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
