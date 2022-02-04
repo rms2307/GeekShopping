@@ -13,6 +13,11 @@ namespace GeekShopping.Web.Services
         private readonly HttpClient _client;
         public const string BasePath = "api/v1/product";
 
+        public ProductService(HttpClient client)
+        {
+            _client = client ?? throw new ArgumentNullException(nameof(client));
+        }
+
         public async Task<ProductModel> CreateProduct(ProductModel model)
         {
             var response = await _client.PostAsJson(BasePath, model);
