@@ -29,8 +29,8 @@ namespace GeekShopping.IdentityServer
         {
             var connection = Configuration["MySqlConnection:MySqlConnectionString"];
 
-            services.AddDbContext<IdentityContext>(options => options.
-                UseMySql(connection,
+            services.AddDbContext<IdentityContext>(options => options
+                .UseMySql(connection,
                     new MySqlServerVersion(
                         new Version(8, 0, 27))));
 
@@ -67,6 +67,7 @@ namespace GeekShopping.IdentityServer
             {
                 app.UseExceptionHandler("/Home/Error");
             }
+            app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
