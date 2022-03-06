@@ -40,7 +40,7 @@ namespace GeekShopping.IdentityServer.Configuration
                 {
                     ClientId = "geek_shopping",
                     ClientSecrets = {new Secret("my_super_secret".Sha256())},
-                    RedirectUris= { "https://localhost:4430/signin-oidc" },
+                    RedirectUris= {"https://localhost:4430/signin-oidc"},
                     PostLogoutRedirectUris = {"https://localhost:4430/signout-callback-oidc"},
                     AllowedGrantTypes = GrantTypes.ClientCredentials,
                     AllowedScopes = new List<string>
@@ -52,7 +52,5 @@ namespace GeekShopping.IdentityServer.Configuration
                     }
                 }
             };
-
-
     }
 }

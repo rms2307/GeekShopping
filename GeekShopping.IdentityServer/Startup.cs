@@ -1,4 +1,5 @@
 using GeekShopping.IdentityServer.Configuration;
+using GeekShopping.IdentityServer.Initializer;
 using GeekShopping.IdentityServer.Model;
 using GeekShopping.IdentityServer.Model.Context;
 using Microsoft.AspNetCore.Builder;
@@ -27,12 +28,10 @@ namespace GeekShopping.IdentityServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var connection = Configuration["MySqlConnection:MySqlConnectionString"];
+            var connection = Configuration["MyConnection:MyConnectionString"];
 
             services.AddDbContext<IdentityContext>(options => options
-                .UseMySql(connection,
-                    new MySqlServerVersion(
-                        new Version(8, 0, 27))));
+                .UseSqlite(connection));
 
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<IdentityContext>()
@@ -51,13 +50,15 @@ namespace GeekShopping.IdentityServer
                 .AddInMemoryClients(IdentityConfiguration.Clients)
                 .AddAspNetIdentity<ApplicationUser>();
 
+            services.AddScoped<IDbInitializer, DbInitializer>();
+
             builder.AddDeveloperSigningCredential();
 
             services.AddControllersWithViews();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IDbInitializer dbInitializer)
         {
             if (env.IsDevelopment())
             {
@@ -73,6 +74,8 @@ namespace GeekShopping.IdentityServer
             app.UseRouting();
             app.UseIdentityServer();
             app.UseAuthorization();
+
+            dbInitializer.Initialize();
 
             app.UseEndpoints(endpoints =>
             {
