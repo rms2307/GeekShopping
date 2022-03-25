@@ -1,0 +1,14 @@
+version: '3.3'
+
+services:
+  dbIdentity:
+    container_name: geek_shopping_identity_server_db
+    image: mysql
+    environment:
+      MYSQL_DATABASE: geek_shopping_identity_server
+      MYSQL_ROOT_PASSWORD: geek_shopping_identity_server
+    restart: always
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./database/mysql/identity:/var/lib/mysql
