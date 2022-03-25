@@ -33,7 +33,7 @@ namespace GeekShopping.IdentityServer.Configuration
                 {
                     ClientId = "client",
                     ClientSecrets = {new Secret("my_super_secret".Sha256())},
-                    AllowedGrantTypes = GrantTypes.Code,
+                    AllowedGrantTypes = GrantTypes.ClientCredentials,
                     AllowedScopes = { "read", "write", "profile"}
                 },
                 new Client
@@ -42,7 +42,7 @@ namespace GeekShopping.IdentityServer.Configuration
                     ClientSecrets = {new Secret("my_super_secret".Sha256())},
                     RedirectUris= {"https://localhost:4430/signin-oidc"},
                     PostLogoutRedirectUris = {"https://localhost:4430/signout-callback-oidc"},
-                    AllowedGrantTypes = GrantTypes.ClientCredentials,
+                    AllowedGrantTypes = GrantTypes.Code,
                     AllowedScopes = new List<string>
                     {
                         IdentityServerConstants.StandardScopes.OpenId,

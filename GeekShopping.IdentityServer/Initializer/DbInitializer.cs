@@ -3,6 +3,7 @@ using GeekShopping.IdentityServer.Model;
 using GeekShopping.IdentityServer.Model.Context;
 using IdentityModel;
 using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic;
 using System.Security.Claims;
 
 namespace GeekShopping.IdentityServer.Initializer
@@ -27,7 +28,12 @@ namespace GeekShopping.IdentityServer.Initializer
             if (_role.FindByNameAsync(IdentityConfiguration.Admin).Result != null)
                 return;
 
-            CreateRoles();
+            var roles = new List<string>
+            {
+                IdentityConfiguration.Admin,
+                IdentityConfiguration.Client
+            };
+            CreateRoles(roles);
 
             CreateUser
             (
@@ -76,10 +82,12 @@ namespace GeekShopping.IdentityServer.Initializer
             }).Result;
         }
 
-        private void CreateRoles()
+        private void CreateRoles(List<string> roles)
         {
-            _role.CreateAsync(new IdentityRole(IdentityConfiguration.Admin)).GetAwaiter().GetResult();
-            _role.CreateAsync(new IdentityRole(IdentityConfiguration.Client)).GetAwaiter().GetResult();
+            roles.ForEach(role =>
+            {
+                _role.CreateAsync(new IdentityRole(role)).GetAwaiter().GetResult();
+            });
         }
     }
 }
