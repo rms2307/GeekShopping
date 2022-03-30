@@ -28,7 +28,7 @@ namespace GeekShopping.Web.Services
             else throw new Exception("Something went wrong when calling API");
         }
 
-        public async Task<IEnumerable<ProductModel>> FindAllProducts(string token)
+        public async Task<IEnumerable<ProductModel>> FindAllProducts(string token = "")
         {
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             var response = await _client.GetAsync(BasePath);
