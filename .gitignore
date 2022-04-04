@@ -339,3 +339,5 @@ ASALocalRun/
 # Local History for Visual Studio
 .localhistory/
 /storage/identityserver/user/qrcode
+
+/compose-db/databases

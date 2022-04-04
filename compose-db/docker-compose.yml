@@ -1,0 +1,25 @@
+version: '3.3'
+
+services:
+  dbProductApi:
+    container_name: geek_shopping_product_api_db
+    image: mysql
+    environment:
+      MYSQL_DATABASE: geek_shopping_product_api
+      MYSQL_ROOT_PASSWORD: geek_shopping_product_api
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./databases/mysql/product:/var/lib/mysql
+  dbCartApi:
+    container_name: geek_shopping_cart_api_db
+    image: mysql
+    environment:
+      MYSQL_DATABASE: geek_shopping_cart_api
+      MYSQL_ROOT_PASSWORD: geek_shopping_cart_api
+    restart: always
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./databases/mysql/cart:/var/lib/mysql
