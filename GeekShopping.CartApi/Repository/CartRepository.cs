@@ -33,11 +33,11 @@ namespace GeekShopping.CartApi.Repository
             }
             else
             {
-                CartDetail cartDetail = await VerifyIfCartDetailsHasSameProduct(vo, cartHeader);
+                CartDetail cartDetail = await VerifyIfCartDetailsHasSameProduct(cart, cartHeader);
 
                 if (cartDetail == null)
                 {
-                    await CreateCartDetails(cart);
+                    await CreateCartDetails(cart, cartHeader.Id);
                 }
                 else
                 {
@@ -127,17 +127,17 @@ namespace GeekShopping.CartApi.Repository
             await _context.SaveChangesAsync();
         }
 
-        private async Task<CartDetail> VerifyIfCartDetailsHasSameProduct(CartVO vo, CartHeader cartHeader)
+        private async Task<CartDetail> VerifyIfCartDetailsHasSameProduct(Cart cart, CartHeader cartHeader)
         {
             return await _context.CartDetails.AsNoTracking()
-                .FirstOrDefaultAsync(p => p.ProductId == vo.CartDetails
+                .FirstOrDefaultAsync(p => p.ProductId == cart.CartDetails
                     .FirstOrDefault().ProductId &&
                     p.CartHeaderId == cartHeader.Id);
         }
 
-        private async Task CreateCartDetails(Cart cart)
+        private async Task CreateCartDetails(Cart cart, long cartHeaderId = 0)
         {
-            cart.CartDetails.FirstOrDefault().CartHeaderId = cart.CartHeader.Id;
+            cart.CartDetails.FirstOrDefault().CartHeaderId = cartHeaderId != 0 ? cartHeaderId : cart.CartHeader.Id;
             cart.CartDetails.FirstOrDefault().Product = null;
             _context.CartDetails.Add(cart.CartDetails.FirstOrDefault());
             await _context.SaveChangesAsync();
