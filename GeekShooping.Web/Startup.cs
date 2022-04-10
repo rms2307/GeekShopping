@@ -1,5 +1,7 @@
 using GeekShopping.Web.Services;
 using GeekShopping.Web.Services.IServices;
+using GeekShopping.Web.Utils;
+using GeekShopping.Web.Utils.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -24,6 +26,10 @@ namespace GeekShooping.Web
         {
             services.AddHttpClient<IProductService, ProductService>
                 (c => c.BaseAddress = new Uri(Configuration["ServiceUrls:ProductAPI"]));
+            services.AddHttpClient<ICartService, CartService>
+                (c => c.BaseAddress = new Uri(Configuration["ServiceUrls:CartAPI"]));
+
+            services.AddSingleton<IRequestHelper, RequestHelper>();
 
             services.AddControllersWithViews();
 
