@@ -44,11 +44,7 @@ namespace GeekShopping.Web.Services
 
         public async Task<ProductViewModel> UpdateProduct(ProductViewModel model, string token)
         {
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var response = await _client.PutAsJson(BasePath, model);
-            if (response.IsSuccessStatusCode)
-                return await response.ReadContentAs<ProductViewModel>();
-            else throw new Exception("Something went wrong when calling API");
+            return await _requestHelper.ExecuteRequest(_client, HttpMethodEnum.Post, model, BasePath, token);
         }
 
         public async Task<bool> DeleteProductById(long id, string token)
