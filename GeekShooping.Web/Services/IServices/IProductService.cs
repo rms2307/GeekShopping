@@ -1,4 +1,5 @@
-﻿using GeekShopping.Web.Models;
+﻿using GeekShopping.Web.Dto;
+using GeekShopping.Web.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

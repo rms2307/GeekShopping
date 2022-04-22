@@ -1,11 +1,10 @@
 ﻿using GeekShopping.Web.Enum;
 using GeekShopping.Web.Models;
 using GeekShopping.Web.Services.IServices;
-using GeekShopping.Web.Utils;
 using GeekShopping.Web.Utils.Interfaces;
+using Newtonsoft.Json;
 using System;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace GeekShopping.Web.Services
@@ -14,7 +13,7 @@ namespace GeekShopping.Web.Services
     {
         private readonly HttpClient _client;
         private readonly IRequestHelper _requestHelper;
-        public const string BasePath = "api/v1/cart";
+        public const string BaseUri = "api/v1/cart";
 
         public CartService(HttpClient client, IRequestHelper requestHelper)
         {
@@ -24,32 +23,30 @@ namespace GeekShopping.Web.Services
 
         public async Task<CartViewModel> FindCartByUserId(string userId, string token)
         {
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var response = await _client.GetAsync($"{BasePath}/find-cart/{userId}");
-            return await response.ReadContentAs<CartViewModel>();
+            var response = await _requestHelper.ExecuteRequest($"{BaseUri}/find-cart/{userId}", _client, HttpMethodEnum.Get, token, null);
+
+            return JsonConvert.DeserializeObject<CartViewModel>(response.Content);
         }
 
         public async Task<CartViewModel> AddItemToCart(CartViewModel model, string token)
         {
-            return await _requestHelper.ExecuteRequest(_client, HttpMethodEnum.Post, model, $"{BasePath}/add-cart", token);
+            var response = await _requestHelper.ExecuteRequest(BaseUri, _client, HttpMethodEnum.Post, token, model);
+
+            return JsonConvert.DeserializeObject<CartViewModel>(response.Content);
         }
 
         public async Task<CartViewModel> UpdateCart(CartViewModel model, string token)
         {
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var response = await _client.PutAsJson($"{BasePath}/update-cart", model);
-            if (response.IsSuccessStatusCode)
-                return await response.ReadContentAs<CartViewModel>();
-            else throw new Exception("Something went wrong when calling API"); ;
+            var response = await _requestHelper.ExecuteRequest($"{BaseUri}/update-cart", _client, HttpMethodEnum.Put, token, model);
+
+            return JsonConvert.DeserializeObject<CartViewModel>(response.Content);
         }
 
         public async Task<bool> RemoveFromCart(long cartId, string token)
         {
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var response = await _client.DeleteAsync($"{BasePath}/remove-cart/{cartId}");
-            if (response.IsSuccessStatusCode)
-                return await response.ReadContentAs<bool>();
-            else throw new Exception("Something went wrong when calling API"); ;
+            var response = await _requestHelper.ExecuteRequest($"{BaseUri}/remove-cart/{cartId}", _client, HttpMethodEnum.Delete, token, null);
+
+            return JsonConvert.DeserializeObject<bool>(response.Content);
         }
 
         public Task<bool> ApplyCoupon(CartViewModel cart, string couponCode, string token)
