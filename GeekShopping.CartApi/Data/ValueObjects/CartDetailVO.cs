@@ -6,7 +6,7 @@
 
         public long CartHeaderId { get; set; }
 
-        public virtual CartHeaderVO CartHeader { get; set; }
+        public virtual CartHeaderVO? CartHeader { get; set; }
 
         public long ProductId { get; set; }
 

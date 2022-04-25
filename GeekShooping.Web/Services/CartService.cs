@@ -30,7 +30,7 @@ namespace GeekShopping.Web.Services
 
         public async Task<CartViewModel> AddItemToCart(CartViewModel model, string token)
         {
-            var response = await _requestHelper.ExecuteRequest(BaseUri, _client, HttpMethodEnum.Post, token, model);
+            var response = await _requestHelper.ExecuteRequest($"{BaseUri}/add-cart", _client, HttpMethodEnum.Post, token, model);
 
             return JsonConvert.DeserializeObject<CartViewModel>(response.Content);
         }
