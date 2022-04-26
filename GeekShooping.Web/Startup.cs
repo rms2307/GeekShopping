@@ -28,6 +28,8 @@ namespace GeekShooping.Web
                 (c => c.BaseAddress = new Uri(Configuration["ServiceUrls:ProductAPI"]));
             services.AddHttpClient<ICartService, CartService>
                 (c => c.BaseAddress = new Uri(Configuration["ServiceUrls:CartAPI"]));
+            //services.AddHttpClient<ICouponService, CouponService>
+            //    (c => c.BaseAddress = new Uri(Configuration["ServiceUrls:CouponAPI"]));
 
             services.AddSingleton<IRequestHelper, RequestHelper>();
 

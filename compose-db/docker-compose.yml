@@ -23,3 +23,14 @@ services:
       - "3307:3306"
     volumes:
       - ./databases/mysql/cart:/var/lib/mysql
+  dbCouponApi:
+    container_name: geek_shopping_coupon_api_db
+    image: mysql
+    environment:
+      MYSQL_DATABASE: geek_shopping_coupon_api
+      MYSQL_ROOT_PASSWORD: geek_shopping_coupon_api
+    restart: always
+    ports:
+      - "3308:3306"
+    volumes:
+      - ./databases/mysql/coupon:/var/lib/mysql
