@@ -12,14 +12,14 @@ namespace GeekShopping.CartApi.Controllers
 
         public CartController(ICartRepository repository)
         {
-            _repository = repository ?? throw new 
+            _repository = repository ?? throw new
                 ArgumentNullException(nameof(repository));
         }
 
         [HttpGet("find-cart/{userId}")]
-        public async Task<ActionResult<CartVO>> FindById(string id)
+        public async Task<ActionResult<CartVO>> FindById([FromRoute] string userId)
         {
-            var cart = await _repository.FindCartByUserId(id);
+            var cart = await _repository.FindCartByUserId(userId);
             if (cart == null) return NotFound();
 
             return Ok(cart);
@@ -47,7 +47,7 @@ namespace GeekShopping.CartApi.Controllers
         public async Task<ActionResult<CartVO>> RemoveCart(int id)
         {
             var status = await _repository.RemoveFromCart(id);
-            if(!status) return BadRequest();
+            if (!status) return BadRequest();
 
             return Ok(status);
         }

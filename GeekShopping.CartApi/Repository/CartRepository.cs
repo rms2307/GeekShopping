@@ -82,6 +82,9 @@ namespace GeekShopping.CartApi.Repository
                 .Where(c => c.CartHeaderId == cart.CartHeader.Id)
                     .Include(c => c.Product);
 
+            if(cart.CartHeader == null)
+                return new CartVO();
+
             return _mapper.Map<CartVO>(cart);
         }
 
@@ -100,6 +103,8 @@ namespace GeekShopping.CartApi.Repository
                 int total = _context.CartDetails
                     .Where(c => c.CartHeaderId == cartDetail.CartHeaderId)
                     .Count();
+
+                _context.CartDetails.Remove(cartDetail);
 
                 if (total == 1)
                 {
