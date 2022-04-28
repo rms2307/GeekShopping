@@ -1,14 +1,16 @@
 ﻿using GeekShopping.CartApi.Data.ValueObjects;
 using GeekShopping.CartApi.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GeekShopping.CartApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
     public class CartController : ControllerBase
     {
-        private ICartRepository _repository;
+        private readonly ICartRepository _repository;
 
         public CartController(ICartRepository repository)
         {
@@ -20,7 +22,7 @@ namespace GeekShopping.CartApi.Controllers
         public async Task<ActionResult<CartVO>> FindById([FromRoute] string userId)
         {
             var cart = await _repository.FindCartByUserId(userId);
-            if (cart == null) return NotFound();
+            if (cart?.CartHeader == null) return NotFound("Cart is Empty");
 
             return Ok(cart);
         }
@@ -48,6 +50,24 @@ namespace GeekShopping.CartApi.Controllers
         {
             var status = await _repository.RemoveFromCart(id);
             if (!status) return BadRequest();
+
+            return Ok(status);
+        }
+
+        [HttpPost("apply-coupon")]
+        public async Task<ActionResult<CartVO>> ApplyCoupon(CartHeaderVO vo)
+        {
+            var status = await _repository.ApplyCoupon(vo.UserId, vo.CouponCode);
+            if (!status) return NotFound();
+
+            return Ok(status);
+        }
+
+        [HttpDelete("remove-coupon/{userId}")]
+        public async Task<ActionResult<CartVO>> RemoveCoupon(string userId)
+        {
+            var status = await _repository.RemoveCoupon(userId);
+            if (!status) return NotFound();
 
             return Ok(status);
         }

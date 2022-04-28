@@ -4,6 +4,7 @@ using GeekShopping.Web.Services.IServices;
 using GeekShopping.Web.Utils.Interfaces;
 using Newtonsoft.Json;
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -12,18 +13,22 @@ namespace GeekShopping.Web.Services
     public class CartService : ICartService
     {
         private readonly HttpClient _client;
+        private readonly ICouponService _couponService;
         private readonly IRequestHelper _requestHelper;
         public const string BaseUri = "api/v1/cart";
 
-        public CartService(HttpClient client, IRequestHelper requestHelper)
+        public CartService(HttpClient client, IRequestHelper requestHelper, ICouponService couponService)
         {
             _client = client ?? throw new ArgumentNullException(nameof(client));
             _requestHelper = requestHelper ?? throw new ArgumentNullException(nameof(requestHelper));
+            _couponService = couponService ?? throw new ArgumentNullException(nameof(couponService));
         }
 
         public async Task<CartViewModel> FindCartByUserId(string userId, string token)
         {
             var response = await _requestHelper.ExecuteRequest($"{BaseUri}/find-cart/{userId}", _client, HttpMethodEnum.Get, token, null);
+            if (response.StatusCode != HttpStatusCode.OK)
+                return null;
 
             return JsonConvert.DeserializeObject<CartViewModel>(response.Content);
         }
@@ -49,9 +54,22 @@ namespace GeekShopping.Web.Services
             return JsonConvert.DeserializeObject<bool>(response.Content);
         }
 
-        public Task<bool> ApplyCoupon(CartViewModel cart, string couponCode, string token)
+        public async Task<bool> ApplyCoupon(CartHeaderViewModel header, string token)
         {
-            throw new System.NotImplementedException();
+            var hasCouponWithThisCode = await _couponService.GetCoupon(header.CouponCode, token);
+            if (hasCouponWithThisCode?.CouponCode == null)
+                return false;
+
+            var response = await _requestHelper.ExecuteRequest($"{BaseUri}/apply-coupon", _client, HttpMethodEnum.Post, token, header);
+
+            return JsonConvert.DeserializeObject<bool>(response.Content);
+        }
+
+        public async Task<bool> RemoveCoupon(string userId, string token)
+        {
+            var response = await _requestHelper.ExecuteRequest($"{BaseUri}/remove-coupon/{userId}", _client, HttpMethodEnum.Delete, token, null);
+
+            return JsonConvert.DeserializeObject<bool>(response.Content);
         }
 
         public Task<CartViewModel> Checkout(CartHeaderViewModel cartHeader, string token)
@@ -60,11 +78,6 @@ namespace GeekShopping.Web.Services
         }
 
         public Task<bool> ClearCart(string userId, string token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<bool> RemoveCoupon(string userId, string token)
         {
             throw new System.NotImplementedException();
         }

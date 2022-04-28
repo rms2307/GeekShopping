@@ -12,43 +12,87 @@ namespace GeekShopping.Web.Controllers
     {
         private readonly IProductService _productService;
         private readonly ICartService _cartService;
+        private readonly ICouponService _couponService;
 
-        private string _accessToken;
-        private string _userId;
-
-        public CartController(IProductService productService, ICartService cartService)
+        public CartController(
+            IProductService productService, ICartService cartService, ICouponService couponService)
         {
             _productService = productService;
             _cartService = cartService;
+            _couponService = couponService;
         }
 
         [Authorize]
         public async Task<IActionResult> CartIndex()
         {
-            _accessToken = await HttpContext.GetTokenAsync("access_token");
-            _userId = User.Claims.Where(u => u.Type == "sub")?.FirstOrDefault()?.Value;
-
             return View(await FindUserCart());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ApplyCoupon(CartViewModel model)
+        {
+            var credentials = await GetCredentials();
+
+            bool response = await _cartService.ApplyCoupon(model.CartHeader, credentials.accessToken);
+            if (response)
+                return RedirectToAction(nameof(CartIndex));
+
+            return View(nameof(CartIndex), await FindUserCart(false));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveCoupon()
+        {
+            var credentials = await GetCredentials();
+
+            bool response = await _cartService.RemoveCoupon(credentials.userId, credentials.accessToken);
+            if (response)
+                return RedirectToAction(nameof(CartIndex));
+
+            return View(nameof(CartIndex), await FindUserCart(false));
         }
 
         public async Task<IActionResult> Remove(int id)
         {
-            if (await _cartService.RemoveFromCart(id, _accessToken))
+            var credentials = await GetCredentials();
+
+            if (await _cartService.RemoveFromCart(id, credentials.accessToken))
                 return RedirectToAction(nameof(CartIndex));
 
             return View();
         }
 
-        private async Task<CartViewModel> FindUserCart()
+        public async Task<IActionResult> Checkout()
         {
-            var response = await _cartService.FindCartByUserId(_userId, _accessToken);
+            return View(await FindUserCart());
+        }
+
+        private async Task<CartViewModel> FindUserCart(bool couponIsValid = true)
+        {
+            var credentials = await GetCredentials();
+
+            CartViewModel response = await _cartService
+                .FindCartByUserId(credentials.userId, credentials.accessToken);
 
             if (response?.CartHeader != null)
             {
+                if (!string.IsNullOrEmpty(response.CartHeader.CouponCode))
+                    await GetCouponAndSetDiscount(credentials, response);
+
+                response.CouponIsValid = couponIsValid;
+
                 CalculatePurchase(response);
             }
 
             return response;
+        }
+
+        private async Task GetCouponAndSetDiscount(dynamic credentials, CartViewModel response)
+        {
+            CouponViewModel coupon = await _couponService
+                                    .GetCoupon(response.CartHeader.CouponCode, credentials.accessToken);
+            if (coupon?.CouponCode != null)
+                response.CartHeader.DiscountAmount = coupon.DiscountAmount;
         }
 
         private void CalculatePurchase(CartViewModel response)
@@ -57,6 +101,16 @@ namespace GeekShopping.Web.Controllers
             {
                 response.CartHeader.PurchaseAmount += (detail.Product.Price * detail.Count);
             }
+            response.CartHeader.PurchaseAmount -= response.CartHeader.DiscountAmount;
+        }
+
+        private async Task<dynamic> GetCredentials()
+        {
+            return new
+            {
+                accessToken = await HttpContext.GetTokenAsync("access_token"),
+                userId = User.Claims.Where(u => u.Type == "sub")?.FirstOrDefault()?.Value
+            };
         }
     }
 }

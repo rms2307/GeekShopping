@@ -66,9 +66,7 @@ namespace GeekShopping.Web.Utils
         {
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
             var response = await client.GetAsync(uri);
-            if (response.IsSuccessStatusCode)
-                return CreateResult(response);
-            else throw new Exception("Something went wrong when calling API");
+            return CreateResult(response);
         }
 
         private async Task<HttpResponseDto> Add(HttpClient client, StringContent data, string uri = null, string jwtToken = null)
