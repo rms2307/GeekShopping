@@ -34,3 +34,10 @@ services:
       - "3308:3306"
     volumes:
       - ./databases/mysql/coupon:/var/lib/mysql
+  rabbitmq:
+    container_name: geek_shopping_rabbitmq
+    image: rabbitmq:3-management
+    ports:
+        - 15672:15672
+    volumes:
+        - ./rabbitmq/data/:/var/lib/rabbitmq/
