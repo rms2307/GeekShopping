@@ -67,6 +67,24 @@ namespace GeekShopping.Web.Controllers
             return View(await FindUserCart());
         }
 
+        [HttpPost]
+        public async Task<IActionResult> Checkout(CartViewModel model)
+        {
+            var credentials = await GetCredentials();
+
+            CartHeaderViewModel response = await _cartService.Checkout(model.CartHeader, credentials.accessToken);
+
+            if (response != null)
+                return RedirectToAction(nameof(Confirmation));
+
+            return View(model);
+        }
+
+        public async Task<IActionResult> Confirmation()
+        {
+            return View();
+        }
+
         private async Task<CartViewModel> FindUserCart(bool couponIsValid = true)
         {
             var credentials = await GetCredentials();
