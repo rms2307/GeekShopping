@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GeekShopping.CartApi.Model.Context;
+using GeekShopping.CartApi.RabbitMQSender;
 using GeekShopping.CartApi.Repository;
 using GeekShopping.CartAPI.Config;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,8 @@ namespace GeekShopping.CartAPI
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             services.AddScoped<ICartRepository, CartRepository>();
+
+            services.AddSingleton<IRabbitMQMessageSender, RabbitMQMessageSender>();
 
             services.AddControllers();
 

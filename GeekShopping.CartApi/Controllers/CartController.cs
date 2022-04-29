@@ -1,5 +1,6 @@
 ﻿using GeekShopping.CartApi.Data.ValueObjects;
 using GeekShopping.CartApi.Messages;
+using GeekShopping.CartApi.RabbitMQSender;
 using GeekShopping.CartApi.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +13,14 @@ namespace GeekShopping.CartApi.Controllers
     public class CartController : ControllerBase
     {
         private readonly ICartRepository _repository;
+        private readonly IRabbitMQMessageSender _rabbitMQMessageSender;
 
-        public CartController(ICartRepository repository)
+        private const string NAME_QUEUE = "checkoutqueue";
+
+        public CartController(ICartRepository repository, IRabbitMQMessageSender rabbitMQMessageSender)
         {
-            _repository = repository ?? throw new
-                ArgumentNullException(nameof(repository));
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _rabbitMQMessageSender = rabbitMQMessageSender ?? throw new ArgumentNullException(nameof(rabbitMQMessageSender));
         }
 
         [HttpGet("find-cart/{userId}")]
@@ -76,12 +80,14 @@ namespace GeekShopping.CartApi.Controllers
         [HttpPost("checkout")]
         public async Task<ActionResult<CheckoutHeaderVO>> Checkout(CheckoutHeaderVO vo)
         {
+            if(vo?.UserId == null) return BadRequest();
+
             var cart = await _repository.FindCartByUserId(vo.UserId);
             if (cart?.CartHeader == null) return NotFound("Cart is Empty");
             vo.CartDetails = cart.CartDetails;
             vo.DateTime = DateTime.Now;
 
-            // TODO: RabbitMQ logic comes here.
+            _rabbitMQMessageSender.SendMessage(vo, NAME_QUEUE);
 
             return Ok(vo);
         }
