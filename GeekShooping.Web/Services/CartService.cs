@@ -72,16 +72,28 @@ namespace GeekShopping.Web.Services
             return JsonConvert.DeserializeObject<bool>(response.Content);
         }
 
-        public async Task<CartHeaderViewModel> Checkout(CartHeaderViewModel model, string token)
+        public async Task<object> Checkout(CartHeaderViewModel model, string token)
         {
             var response = await _requestHelper.ExecuteRequest($"{BaseUri}/checkout", _client, HttpMethodEnum.Post, token, model);
-
-            return JsonConvert.DeserializeObject<CartHeaderViewModel>(response.Content);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                return JsonConvert.DeserializeObject<CartHeaderViewModel>(response.Content);
+            }
+            else if (response.StatusCode.ToString().Equals("PreconditionFailed"))
+            {
+                return "Coupon Price has changed, please confirm!";
+            }
+            else throw new Exception("Something went wrong when calling API");
         }
 
         public Task<bool> ClearCart(string userId, string token)
         {
             throw new System.NotImplementedException();
+        }
+
+        public Task<object> Checkout(object cartHeader, string token)
+        {
+            throw new NotImplementedException();
         }
     }
 }
