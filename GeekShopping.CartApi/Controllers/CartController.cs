@@ -102,6 +102,8 @@ namespace GeekShopping.CartApi.Controllers
 
             _rabbitMQMessageSender.SendMessage(vo, NAME_QUEUE);
 
+            await _cartRepository.ClearCart(vo.UserId);
+
             return Ok(vo);
         }
     }
