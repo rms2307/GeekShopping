@@ -45,6 +45,17 @@ services:
       - "3309:3306"
     volumes:
       - ./databases/mysql/order:/var/lib/mysql
+  dbEmail:
+    container_name: geek_shopping_email_db
+    image: mysql
+    environment:
+      MYSQL_DATABASE: geek_shopping_email
+      MYSQL_ROOT_PASSWORD: geek_shopping_email
+    restart: always
+    ports:
+      - "3310:3306"
+    volumes:
+      - ./databases/mysql/email:/var/lib/mysql
   rabbitmq:
     container_name: geek_shopping_rabbitmq
     image: rabbitmq:3-management
