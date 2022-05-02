@@ -59,7 +59,7 @@ namespace GeekShopping.PaymentAPI.MessageConsumer
 
             try
             {
-                _rabbitMQMessageSender.SendMessage(paymentResult, QUEUE_NAME_PAYMENT_RESULT);
+                _rabbitMQMessageSender.SendMessage(paymentResult);
             }
             catch (Exception ex)
             {

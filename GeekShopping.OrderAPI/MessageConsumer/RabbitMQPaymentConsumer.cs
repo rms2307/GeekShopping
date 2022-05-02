@@ -15,10 +15,13 @@ namespace GeekShopping.OrderAPI.MessageConsumer
         private IConnection _connection;
         private IModel _channel;
 
+        private string _queueName = string.Empty;
+
         private const string HOST_NAME_RABBIT = "localhost";
         private const string USER_NAME_RABBIT = "guest";
         private const string PASSWORD = "guest";
         private const string QUEUE_NAME_PAYMENT_RESULT = "orderpaymentresultqueue";
+        private const string EXCHANGE_NAME = "FanoutPaymentUpdateExchange";
 
         public RabbitMQPaymentConsumer(OrderRepository repository)
         {
@@ -40,7 +43,7 @@ namespace GeekShopping.OrderAPI.MessageConsumer
 
                 _channel.BasicAck(evt.DeliveryTag, false);
             };
-            _channel.BasicConsume(QUEUE_NAME_PAYMENT_RESULT, false, consumer);
+            _channel.BasicConsume(_queueName, false, consumer);
 
             return Task.CompletedTask;
         }
@@ -70,7 +73,10 @@ namespace GeekShopping.OrderAPI.MessageConsumer
 
                 _connection = factory.CreateConnection();
                 _channel = _connection.CreateModel();
-                _channel.QueueDeclare(queue: QUEUE_NAME_PAYMENT_RESULT, false, false, false, arguments: null);
+
+                _channel.ExchangeDeclare(EXCHANGE_NAME, ExchangeType.Fanout);
+                _queueName = _channel.QueueDeclare().QueueName;
+                _channel.QueueBind(_queueName, EXCHANGE_NAME, "");
             }
             catch (Exception ex)
             {

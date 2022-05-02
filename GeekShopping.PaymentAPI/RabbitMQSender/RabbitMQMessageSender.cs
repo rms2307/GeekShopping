@@ -13,6 +13,8 @@ namespace GeekShopping.PaymentApi.RabbitMQSender
         private readonly string _userName;
         private IConnection _connection;
 
+        private const string EXCHANGE_NAME = "FanoutPaymentUpdateExchange";
+
         public RabbitMQMessageSender()
         {
             _hostName = "localhost";
@@ -20,13 +22,13 @@ namespace GeekShopping.PaymentApi.RabbitMQSender
             _userName = "guest";
         }
 
-        public void SendMessage(BaseMessage message, string queueName)
+        public void SendMessage(BaseMessage message)
         {
             try
             {
                 CreateConnection();
 
-                PublishMessage(message, queueName);
+                PublishMessage(message);
             }
             catch (Exception ex)
             {
@@ -34,15 +36,15 @@ namespace GeekShopping.PaymentApi.RabbitMQSender
             }
         }
 
-        private void PublishMessage(BaseMessage message, string queueName)
+        private void PublishMessage(BaseMessage message)
         {
             var channel = _connection.CreateModel();
-            channel.QueueDeclare(queue: queueName, false, false, false, arguments: null);
+            channel.ExchangeDeclare(EXCHANGE_NAME, ExchangeType.Fanout, durable: false);
             byte[] body = GetMessageAsByteArray(message);
 
             channel.BasicPublish(
-                    exchange: "",
-                    routingKey: queueName,
+                    exchange: EXCHANGE_NAME,
+                    routingKey: "",
                     basicProperties: null,
                     body: body
                 );
