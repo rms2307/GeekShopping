@@ -1,12 +1,10 @@
-using GeekShopping.OrderApi.RabbitMQSender;
-using GeekShopping.OrderApi.Repository;
-using GeekShopping.OrderAPI.MessageConsumer;
-using GeekShopping.OrderAPI.Model;
-using Microsoft.EntityFrameworkCore;
+using GeekShopping.PaymentApi.RabbitMQSender;
+using GeekShopping.PaymentAPI.MessageConsumer;
+using GeekShopping.PaymentProcessor;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
-namespace GeekShopping.OrderAPI
+namespace GeekShopping.PaymentAPI
 {
     public class Startup
     {
@@ -20,24 +18,9 @@ namespace GeekShopping.OrderAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var connection = Configuration["MySQlConnection:MySQlConnectionString"];
-
-            services.AddDbContext<OrderContext>(options => options.
-                UseMySql(connection,
-                        new MySqlServerVersion(
-                            new Version(8, 0, 5))));
-
-            var builder = new DbContextOptionsBuilder<OrderContext>();
-            builder.UseMySql(connection, 
-                        new MySqlServerVersion(
-                            new Version(8, 0, 5)));
-
-            services.AddSingleton(new OrderRepository(builder.Options));
-
-            services.AddHostedService<RabbitMQCheckoutConsumer>();
-            services.AddHostedService<RabbitMQPaymentConsumer>();
+            services.AddSingleton<IProcessPayment, ProcessPayment>();
             services.AddSingleton<IRabbitMQMessageSender, RabbitMQMessageSender>();
-
+            services.AddHostedService<RabbitMQPaymentConsumer>();
             services.AddControllers();
 
             services.AddAuthentication("Bearer")
@@ -61,7 +44,7 @@ namespace GeekShopping.OrderAPI
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "GeekShopping.OrderAPI", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "GeekShopping.PaymentAPI", Version = "v1" });
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = @"Enter 'Bearer' [space] and your token!",
@@ -97,7 +80,7 @@ namespace GeekShopping.OrderAPI
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "GeekShopping.OrderAPI v1"));
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "GeekShopping.PaymentAPI v1"));
             }
 
             app.UseHttpsRedirection();

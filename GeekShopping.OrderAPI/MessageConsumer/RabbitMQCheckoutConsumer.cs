@@ -1,4 +1,5 @@
-﻿using GeekShopping.OrderApi.Repository;
+﻿using GeekShopping.OrderApi.RabbitMQSender;
+using GeekShopping.OrderApi.Repository;
 using GeekShopping.OrderAPI.Messages;
 using GeekShopping.OrderAPI.Model;
 using RabbitMQ.Client;
@@ -13,15 +14,18 @@ namespace GeekShopping.OrderAPI.MessageConsumer
         private readonly OrderRepository _repository;
         private IConnection _connection;
         private IModel _channel;
+        private IRabbitMQMessageSender _rabbitMQMessageSender;
 
         private const string HOST_NAME_RABBIT = "localhost";
         private const string USER_NAME_RABBIT = "guest";
         private const string PASSWORD = "guest";
-        private const string QUEUE_NAME = "checkoutqueue";
+        private const string QUEUE_NAME_CHECKOUT = "checkoutqueue";
+        private const string QUEUE_NAME_PAYMENT = "orderpaymentprocessqueue";
 
-        public RabbitMQCheckoutConsumer(OrderRepository repository)
+        public RabbitMQCheckoutConsumer(OrderRepository repository, IRabbitMQMessageSender rabbitMQMessageSender)
         {
             _repository = repository;
+            _rabbitMQMessageSender = rabbitMQMessageSender;
             Configure();
         }
 
@@ -34,15 +38,18 @@ namespace GeekShopping.OrderAPI.MessageConsumer
             {
                 var content = Encoding.UTF8.GetString(evt.Body.ToArray());
                 CheckoutHeaderVO vo = JsonSerializer.Deserialize<CheckoutHeaderVO>(content);
-                ProcessOrder(vo).GetAwaiter().GetResult();
+
+                var order = ProcessOrder(vo).GetAwaiter().GetResult();
+                ProcessPayment(order);
+
                 _channel.BasicAck(evt.DeliveryTag, false);
             };
-            _channel.BasicConsume(QUEUE_NAME, false, consumer);
+            _channel.BasicConsume(QUEUE_NAME_CHECKOUT, false, consumer);
 
             return Task.CompletedTask;
         }
 
-        private async Task ProcessOrder(CheckoutHeaderVO vo)
+        private async Task<OrderHeader> ProcessOrder(CheckoutHeaderVO vo)
         {
             OrderHeader order = new()
             {
@@ -77,19 +84,52 @@ namespace GeekShopping.OrderAPI.MessageConsumer
             }
 
             await _repository.AddOrder(order);
+
+            return order;
+        }
+
+        private void ProcessPayment(OrderHeader order)
+        {
+            PaymentVO payment = new()
+            {
+                Name = $"{order.FirstName} {order.LastName}",
+                CardNumber = order.CardNumber,
+                CVV = order.CVV,
+                ExpiryMonthYear = order.ExpiryMonthYear,
+                OrderId = order.Id,
+                PurchaseAmount = order.PurchaseAmount,
+                Email = order.Email
+            };
+
+            try
+            {
+                _rabbitMQMessageSender.SendMessage(payment, QUEUE_NAME_PAYMENT);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
 
         private void Configure()
         {
-            var factory = new ConnectionFactory
+            try
             {
-                HostName = HOST_NAME_RABBIT,
-                UserName = USER_NAME_RABBIT,
-                Password = PASSWORD,
-            };
-            _connection = factory.CreateConnection();
-            _channel = _connection.CreateModel();
-            _channel.QueueDeclare(queue: QUEUE_NAME, false, false, false, arguments: null);
+                var factory = new ConnectionFactory
+                {
+                    HostName = HOST_NAME_RABBIT,
+                    UserName = USER_NAME_RABBIT,
+                    Password = PASSWORD,
+                };
+
+                _connection = factory.CreateConnection();
+                _channel = _connection.CreateModel();
+                _channel.QueueDeclare(queue: QUEUE_NAME_CHECKOUT, false, false, false, arguments: null);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
     }
 }

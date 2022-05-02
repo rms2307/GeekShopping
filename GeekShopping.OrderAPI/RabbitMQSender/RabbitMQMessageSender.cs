@@ -1,10 +1,10 @@
-﻿using GeekShopping.CartApi.Messages;
-using GeekShopping.MessageBus;
+﻿using GeekShopping.MessageBus;
+using GeekShopping.OrderAPI.Messages;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
 
-namespace GeekShopping.CartApi.RabbitMQSender
+namespace GeekShopping.OrderApi.RabbitMQSender
 {
     public class RabbitMQMessageSender : IRabbitMQMessageSender
     {
@@ -22,8 +22,16 @@ namespace GeekShopping.CartApi.RabbitMQSender
 
         public void SendMessage(BaseMessage message, string queueName)
         {
-            if (ConnectionExists())
+            try
+            {
+                CreateConnection();
+
                 PublishMessage(message, queueName);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
 
         private void PublishMessage(BaseMessage message, string queueName)
@@ -43,34 +51,20 @@ namespace GeekShopping.CartApi.RabbitMQSender
         private byte[] GetMessageAsByteArray(BaseMessage message)
         {
             var options = new JsonSerializerOptions { WriteIndented = true };
-            var json = JsonSerializer.Serialize((CheckoutHeaderVO)message, options);
+            var json = JsonSerializer.Serialize((PaymentVO)message, options);
 
             return Encoding.UTF8.GetBytes(json);
         }
 
-        private bool ConnectionExists()
-        {
-            if (_connection != null) return true;
-            CreateConnection();
-            return _connection != null;
-        }
-
         private void CreateConnection()
         {
-            try
+            var factory = new ConnectionFactory
             {
-                var factory = new ConnectionFactory
-                {
-                    HostName = _hostName,
-                    UserName = _userName,
-                    Password = _password,
-                };
-                _connection = factory.CreateConnection();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+                HostName = _hostName,
+                UserName = _userName,
+                Password = _password,
+            };
+            _connection = factory.CreateConnection();
         }
     }
 }
